@@ -63,15 +63,13 @@ public class SharedMatrix {
         try {
             if (snapshot.length == 0) return new double[0][0];
 
+            // Every vector is read-locked above, so each one is copied as a whole row or column
+            // with one lock acquisition, instead of one acquisition per element.
             VectorOrientation matrixOrientation = snapshot[0].getOrientation();
             if (matrixOrientation == VectorOrientation.ROW_MAJOR) {
-                int colLength = snapshot[0].length();
-                int rowLength = snapshot.length;
-                double[][] result = new double[rowLength][colLength];
-                for (int i = 0; i < rowLength; i++) {
-                    for (int j = 0; j < colLength; j++) {
-                        result[i][j] = snapshot[i].get(j);
-                    }
+                double[][] result = new double[snapshot.length][];
+                for (int i = 0; i < snapshot.length; i++) {
+                    result[i] = snapshot[i].snapshot();
                 }
                 return result;
             } else {
@@ -79,8 +77,9 @@ public class SharedMatrix {
                 int colLength = snapshot.length;
                 double[][] result = new double[rowLength][colLength];
                 for (int j = 0; j < colLength; j++) {
+                    double[] column = snapshot[j].snapshot();
                     for (int i = 0; i < rowLength; i++) {
-                        result[i][j] = snapshot[j].get(i);
+                        result[i][j] = column[i];
                     }
                 }
                 return result;

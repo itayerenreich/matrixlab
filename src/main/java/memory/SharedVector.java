@@ -27,6 +27,19 @@ public class SharedVector {
             return vector[index];
         } finally { readUnlock(); }
     }
+    /**
+     * Returns a copy of the whole vector, taken under a single read lock.
+     *
+     * <p>Copying an entire row at once is much cheaper than calling {@link #get(int)} for every
+     * element, which takes and releases the lock once per value. The returned array is owned by
+     * the caller: later writes to this vector never change it, and changes to it never reach
+     * this vector.
+     */
+    public double[] snapshot() {
+        readLock();
+        try { return vector.clone(); }
+        finally { readUnlock(); }
+    }
     public int length() { readLock(); try { return vector.length; } finally { readUnlock(); } }
     public VectorOrientation getOrientation() { readLock(); try { return orientation; } finally { readUnlock(); } }
     public void transpose() {
