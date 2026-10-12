@@ -14,6 +14,7 @@ Machine: Windows, 12 logical processors, Java 23.0.1.
 |---|---|---|
 | `baseline-before-memory-fix.csv` | Original memory layer: every element read takes and releases a lock | `wide` and `chain` run 15-18x slower than serial and do not speed up with more workers; their times are almost identical, so sequential overhead, not missing parallelism, is the bottleneck |
 | `after-row-snapshot.csv` | `readRowMajor` copies each row under one lock (`SharedVector.snapshot()`) | `wide` 2.7-4x faster and `chain` 5-7x faster; adding workers now helps `wide` (1.43x at 4-8 workers instead of none). `wide` and `chain` now differ, which shows a fixed per-operation cost is the next bottleneck |
+| `after-direct-right-operand.csv` | Multiplication reads the right operand array directly instead of loading it into a `SharedMatrix` and copying it back out | A further 1.2-1.5x on `wide` and `chain`; `single` with 8 workers now matches the serial loop (1.02x). Profiling shows most remaining time is dispatching each operation to the pool and waiting for it |
 
 ## Before vs after the row-snapshot fix
 
@@ -31,6 +32,16 @@ Median ms, same machine, same seed.
 | chain | 8 | 5.35 | 0.83 | 6.41x |
 
 `single` barely changes because its time is mostly the multiplication itself; the lock overhead mattered most when the work per operation was small. The engine is still slower than the plain serial loop in every scenario, so the remaining overhead is the next target.
+
+## Progress so far
+
+Median ms with 8 workers, same machine, same seed.
+
+| Scenario | Baseline | After row snapshot | After direct right operand | Total speedup |
+|---|---|---|---|---|
+| single | 2.88 | 2.26 | 2.13 | 1.35x |
+| wide | 5.61 | 1.39 | 1.08 | 5.2x |
+| chain | 5.35 | 0.83 | 0.65 | 8.2x |
 
 ## How to read the columns
 
