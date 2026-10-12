@@ -31,6 +31,26 @@ public class TiredExecutor implements AutoCloseable {
     /** Fire-and-forget submission; failures are counted in the worker report. */
     public void submit(Runnable task) { submitTracked(task); }
 
+    /**
+     * Hands {@code task} to the least fatigued idle worker and returns at once, without waiting
+     * for the task to run. The returned future completes when the task finishes: normally if it
+     * returned, exceptionally with the task's own exception if it threw. A failed task never
+     * kills its worker.
+     *
+     * <p>Unlike {@link #submitAll}, this does not wait for anything except a free worker: when
+     * every worker is busy the call blocks until one becomes idle (backpressure). Everything the
+     * task wrote is visible to whoever observes the future's completion.
+     *
+     * <p>Completion callbacks attached to the future run on the worker thread that ran the task,
+     * after the worker is already back in the idle pool. They must not block or submit new work.
+     *
+     * @throws IllegalArgumentException   if {@code task} is null
+     * @throws RejectedExecutionException if the executor is shut down, the caller is interrupted
+     *                                    while waiting for a worker, or the caller is itself one
+     *                                    of this executor's workers (that could deadlock)
+     */
+    public CompletableFuture<Void> submitAsync(Runnable task) { return submitTracked(task); }
+
     private CompletableFuture<Void> submitTracked(Runnable task) {
         if (task == null) throw new IllegalArgumentException("task cannot be null");
         rejectWorkerCall();
