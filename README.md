@@ -6,36 +6,21 @@ Evaluate JSON expressions, inspect how work is distributed across a custom worke
 
 Java 17 · Maven · Jackson · JUnit 5
 
-## Quick demo
-
-The downloadable project includes a prebuilt JAR in `release/`. Install Java 17 or newer, open a terminal in this folder, then run:
-
-```powershell
-java -version
-java -jar release/matrixlab-1.0.0.jar solve 4 examples/example1.json result.json
-java -jar release/matrixlab-1.0.0.jar race 128 4 5 results 42
-```
-
-Open `results/matrix-race.html` in your browser. On Windows PowerShell:
-
-```powershell
-Start-Process .\results\matrix-race.html
-```
-
-You can also open `demo-preview/matrix-race.html` immediately to inspect an actual report generated during validation. Its measurements are specific to that run and machine.
-
-## Build from source
+## Quick start
 
 Requirements: **JDK 17+** and **Maven 3.9+** on `PATH`. The first build downloads dependencies from Maven Central.
 
-```powershell
+```bash
 mvn clean verify
-java -jar target/matrixlab-1.0.0.jar --help
 java -jar target/matrixlab-1.0.0.jar solve 4 examples/example1.json result.json
-java -jar target/matrixlab-1.0.0.jar race 256 4 7 results 42
+java -jar target/matrixlab-1.0.0.jar race 128 4 5 results 42
 ```
 
-These commands also work in Bash. Build a fresh JAR after changing source code; the bundled release JAR is a snapshot of this version.
+Then open `results/matrix-race.html` in your browser (on Windows: `Start-Process .\results\matrix-race.html`).
+
+Want to see a report without building? Open [`demo-preview/matrix-race.html`](demo-preview/matrix-race.html), a real report from a validation run. Its measurements are specific to that run and machine.
+
+Run `java -jar target/matrixlab-1.0.0.jar --help` for all options.
 
 ## Expression format
 
@@ -118,6 +103,8 @@ See [architecture](docs/ARCHITECTURE.md), [changes](docs/CHANGES.md).
 
 ## Origins and attribution
 
-The original engine was a collaborative university project by **Guy Abramovich and Itay Erenreich**. This portfolio edition adds reliability fixes, regression tests, Matrix Race, a runnable distribution, and revised documentation. The modernization was developed with AI assistance; contributors should review and understand the changes before presenting them.
+The original engine was a collaborative university project by **Guy Abramovich and Itay Erenreich**. This portfolio edition adds reliability fixes, regression tests, Matrix Race, and revised documentation. Parts of the modernization were developed with AI assistance.
 
-The original submission instructions and personal identification numbers are excluded. Existing Java package names are retained for compatibility. See `NOTICE.md` for attribution. No new license or ownership rights are implied.
+This repository is Itay Erenreich's continuation of the project; changes from this point on are maintained here independently.
+
+The original submission instructions and personal identification numbers are excluded. Existing Java package names are retained for compatibility. No new license or ownership rights are implied.
