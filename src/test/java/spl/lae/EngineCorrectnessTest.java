@@ -151,6 +151,61 @@ class EngineCorrectnessTest {
     }
 
     // ---------------------------------------------------------------------------------------
+    // Inputs belong to the caller and must never be modified
+    // ---------------------------------------------------------------------------------------
+
+    @Test
+    void inputMatricesAreNeverModified() {
+        Random random = new Random(31);
+        try (LinearAlgebraEngine engine = new LinearAlgebraEngine(4)) {
+            for (int trial = 0; trial < 100; trial++) {
+                int r = 1 + random.nextInt(8), k = 1 + random.nextInt(8), c = 1 + random.nextInt(8);
+                double[][] a = intMatrix(random, r, k), b = intMatrix(random, k, c), a2 = intMatrix(random, r, k);
+                double[][] aCopy = deepCopy(a), bCopy = deepCopy(b), a2Copy = deepCopy(a2);
+                engine.run(op("*", leaf(a), leaf(b)));
+                engine.run(op("+", leaf(a), leaf(a2)));
+                engine.run(op("-", leaf(a)));
+                engine.run(op("T", leaf(b)));
+                engine.run(op("+", op("*", leaf(a), leaf(b)), op("-", op("*", leaf(a2), leaf(b)))));
+                assertExactlyEqual(aCopy, a, "A after trial " + trial);
+                assertExactlyEqual(bCopy, b, "B after trial " + trial);
+                assertExactlyEqual(a2Copy, a2, "A2 after trial " + trial);
+            }
+        }
+    }
+
+    @Test
+    void sameArrayUsedAsBothOperandsIsCorrectAndUnchanged() {
+        // A*A and A+A pass the very same array as left and right operand.
+        Random random = new Random(37);
+        try (LinearAlgebraEngine engine = new LinearAlgebraEngine(3)) {
+            for (int trial = 0; trial < 50; trial++) {
+                int n = 1 + random.nextInt(9);
+                double[][] a = intMatrix(random, n, n), copy = deepCopy(a);
+                double[][] product = engine.run(op("*", leaf(a), leaf(a))).getMatrix();
+                assertExactlyEqual(SerialEvaluator.multiply(copy, copy), product, "A*A trial " + trial);
+                double[][] sum = engine.run(op("+", leaf(a), leaf(a))).getMatrix();
+                assertExactlyEqual(SerialEvaluator.add(copy, copy), sum, "A+A trial " + trial);
+                assertExactlyEqual(copy, a, "A unchanged trial " + trial);
+            }
+        }
+    }
+
+    @Test
+    void resultIsNotTheSameArrayAsAnInput() {
+        double[][] a = {{1, 2}, {3, 4}}, identity = {{1, 0}, {0, 1}};
+        try (LinearAlgebraEngine engine = new LinearAlgebraEngine(2)) {
+            double[][] result = engine.run(op("*", leaf(a), leaf(identity))).getMatrix();
+            assertExactlyEqual(a, result, "A*I");
+            assertNotSame(a, result);
+            assertNotSame(identity, result);
+            result[0][0] = 999;
+            assertEquals(1, a[0][0]);
+            assertEquals(1, identity[0][0]);
+        }
+    }
+
+    // ---------------------------------------------------------------------------------------
     // Reuse and concurrent callers
     // ---------------------------------------------------------------------------------------
 
@@ -278,6 +333,12 @@ class EngineCorrectnessTest {
         for (int i = 0; i < rows; i++)
             for (int j = 0; j < cols; j++) m[i][j] = random.nextGaussian();
         return m;
+    }
+
+    private static double[][] deepCopy(double[][] m) {
+        double[][] c = new double[m.length][];
+        for (int i = 0; i < m.length; i++) c[i] = m[i].clone();
+        return c;
     }
 
     private static void check(LinearAlgebraEngine engine, ComputationNode tree, String context) {

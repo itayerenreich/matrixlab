@@ -55,7 +55,9 @@ public class LinearAlgebraEngine implements AutoCloseable {
         validateOperation(node);
         leftMatrix.loadRowMajor(node.getChildren().get(0).getMatrix());
 
-        if (node.getChildren().size() > 1) {
+        // Only addition needs the right operand as shared vectors (each row is added in place
+        // into the left row). Multiplication only reads it, so it uses the operand array directly.
+        if (node.getNodeType() == ComputationNodeType.ADD) {
             rightMatrix.loadRowMajor(node.getChildren().get(1).getMatrix());
         }
 
@@ -66,7 +68,7 @@ public class LinearAlgebraEngine implements AutoCloseable {
                 tasks = createAddTasks();
                 break;
             case MULTIPLY:
-                tasks = createMultiplyTasks();
+                tasks = createMultiplyTasks(node.getChildren().get(1).getMatrix());
                 break;
             case NEGATE:
                 tasks = createNegateTasks();
@@ -128,10 +130,18 @@ public class LinearAlgebraEngine implements AutoCloseable {
         return tasks;
     }
 
-    public List<Runnable> createMultiplyTasks() {
+    /**
+     * One task per row of the left matrix: row · right.
+     *
+     * <p>{@code rightRows} is shared by every task and is only ever read, never written, so no
+     * lock or private copy is needed. It was already validated as a rectangular matrix. Loading
+     * it into a {@link SharedMatrix} and reading it straight back out, as earlier versions did,
+     * copied the whole matrix twice per multiplication for no benefit.
+     */
+    public List<Runnable> createMultiplyTasks(double[][] rightRows) {
         List<Runnable> tasks = new java.util.ArrayList<>();
         int rows = leftMatrix.length();
-        final double[][] rightSnapshot = rightMatrix.readRowMajor();
+        final double[][] rightSnapshot = rightRows;
 
         for (int i = 0; i < rows; i++) {
             final int r = i;
