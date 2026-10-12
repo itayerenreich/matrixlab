@@ -1,0 +1,16 @@
+scenario,workers,median_ms,scaling_vs_1_worker,speedup_vs_serial
+single,serial,2.3058,,1.000
+single,1,6.8791,1.000,0.335
+single,2,4.5777,1.503,0.504
+single,4,3.6229,1.899,0.636
+single,8,2.8764,2.392,0.802
+wide,serial,0.3617,,1.000
+wide,1,5.3167,1.000,0.068
+wide,2,5.5554,0.957,0.065
+wide,4,5.6346,0.944,0.064
+wide,8,5.6104,0.948,0.064
+chain,serial,0.2896,,1.000
+chain,1,5.4190,1.000,0.053
+chain,2,5.3516,1.013,0.054
+chain,4,5.3732,1.009,0.054
+chain,8,5.3526,1.012,0.054
