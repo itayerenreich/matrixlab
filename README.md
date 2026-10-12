@@ -65,6 +65,22 @@ The default worker cap is the smaller of 4 and the JVM's reported processor coun
 
 Worker task counts include warmups. Inputs and order are reproducible; timings and task allocation are affected by the OS and are not deterministic. This is an educational performance experiment, not a JMH microbenchmark or a universal speedup claim. Small matrices can favor serial execution.
 
+## Scenario benchmark
+
+Matrix Race measures one large multiplication. The scenario benchmark measures how the engine behaves on differently shaped expression trees:
+
+```bash
+java -jar target/matrixlab-1.0.0.jar scenarios [maxWorkers=8] [repetitions=15] [outputDirectory=results] [seed=42]
+```
+
+| Scenario | Tree | What it isolates |
+|---|---|---|
+| `single` | `A*B`, 128x128 | One large operation with plenty of rows per worker |
+| `wide` | Sum of 8 independent `2x128 * 128x128` products | Many small operations that could overlap |
+| `chain` | `A*B1*...*B8`, same sizes as `wide` | Same multiplications as `wide`, but each depends on the previous one (control group) |
+
+`scaling` is the scenario's 1-worker median divided by its N-worker median. Every result is verified against a single-threaded reference evaluator. Results are written to `results/scenarios.csv`.
+
 ## Design
 
 ```mermaid
